@@ -6,7 +6,8 @@ use crate::components::directory_card::DirectoryCard;
 use crate::components::navbar::NavbarComponent;
 
 // use serde::{Deserialize, Serialize};
-// use gloo_net::http::Request;
+use gloo_net::http::Request;
+use web_sys;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -35,30 +36,65 @@ enum Route {
     // Dashboard,
 }
 
+// TODO: this function is sending a bajillion requests a second, fixme
 #[function_component(Home)]
 fn home() -> Html {
-    // let subdirectories = use_state(|| vec![]);
+    // State to store the list of subdirectories
+    let subdirectories = use_state(|| vec![]);
+    // State to store any error messages
+    let error_message = use_state(|| None);
 
-    // {
-    //     let subdirectories = subdirectories.clone();
-    //     use_effect(move || {
-    //         wasm_bindgen_futures::spawn_local(async move {
-    //             let response = Request::get("http://127.0.0.1:8080/list")
-    //                 .send()
-    //                 .await
-    //                 .unwrap();
-    //             let dirs: Vec<String> = response.json().await.unwrap();
-    //             subdirectories.set(dirs);
-    //         });
-    //         || ()
-    //     });
-    // }
+    {
+        let subdirectories = subdirectories.clone();
+        let error_message = error_message.clone();
+
+        // Fetch the list of subdirectories when the component is mounted
+        use_effect(move || {
+            wasm_bindgen_futures::spawn_local(async move {
+                // Make the API request
+                match Request::get("http://127.0.0.1:8088/list").send().await {
+                    Ok(response) => {
+                        // Parse the JSON response into a vector of strings
+                        match response.json::<Vec<String>>().await {
+                            Ok(dirs) => {
+                                web_sys::console::log_1(
+                                    &format!("Fetched directories: {:?}", dirs).into(),
+                                );
+                                subdirectories.set(dirs); // Update state with fetched data
+                            }
+                            Err(err) => {
+                                web_sys::console::log_1(
+                                    &format!("Failed to parse JSON: {:?}", err).into(),
+                                );
+                                error_message
+                                    .set(Some(format!("Failed to parse response: {:?}", err)));
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        web_sys::console::log_1(&format!("Failed to fetch data: {:?}", err).into());
+                        error_message.set(Some(format!("Failed to fetch data: {:?}", err)));
+                    }
+                }
+            });
+            || ()
+        });
+    }
 
     html! {
         <div>
-            // {for subdirectories.iter().map(|path| html! {
-            //     <DirectoryCard path={path.clone()} />
-            // })}
+            <p>{"TEST"}</p>
+            // Display an error message if one exists
+            {if let Some(error) = (*error_message).clone() {
+                html! { <p style="color: red;">{error}</p> }
+            } else {
+                html! {}
+            }}
+            // Render DirectoryCard components for each subdirectory
+            {for subdirectories.iter().map(|path| html! {
+                <DirectoryCard path={path.clone()} />
+            })}
+            <p>{"TEST"}</p>
         </div>
     }
 }
