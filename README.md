@@ -10,6 +10,7 @@
 ```bash
 cd frontend
 nix-shell ./shell.nix
+npm install .
 trunk serve
 ```
 
