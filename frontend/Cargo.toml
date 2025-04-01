@@ -1,0 +1,14 @@
+[package]
+name = "frontend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wasm-bindgen = "0.2.100"
+wasm-bindgen-futures = "0.4.50"
+# gloo-net = "0.6.0"
+# actix-web = "4.10.2"
+# serde = { version = "1.0.219", features = ["derive"] }
+# serde_yaml = "0.9.34"
+yew = { version = "0.21.0", features = ["csr"] }
+yew-router = "0.18.0"
